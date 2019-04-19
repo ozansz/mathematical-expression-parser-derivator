@@ -39,7 +39,7 @@ int main(int argc, char **argv, char **envp) {
 
     dump_ast(ast);
 
-    printf("[+] Evaluating AST... ");
+    printf("\n[+] Evaluating AST... ");
 
     ast = derive_ast(ast);
 

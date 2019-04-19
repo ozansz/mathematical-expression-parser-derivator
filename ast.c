@@ -128,50 +128,36 @@ ASTNode *parse_lex(Lex *lex) {
     ASTStack *opStack = create_ast_stack();
     ASTStack *outStack = create_ast_stack();
     ASTNode *_peek;
+    TokenNode *curr_node;
 
-    TokenNode *tnode = lex_iternode(lex);
-
-    for(; tnode != NULL; tnode = lex_iternode(lex)) {
-        if (tnode->tok == __INIT)
+    while ((curr_node = lex_iternode(lex)) != NULL) {
+        if (curr_node->tok == __INIT)
             continue;
-
-        if (tnode->ttype == TT_LITERAL || tnode->ttype == TT_VARIABLE || tnode->ttype == TT_FUNCTION_NOARG)
-            push_ast_stack(outStack, create_ast_node(tnode->tok, tnode->value));
-        else if (tnode->ttype == TT_OPERATOR) {
-            _peek = peek_ast_stack(opStack);
-
-            while (_peek && (_peek->ttype == TT_OPERATOR) 
-				&& ((get_operator_assoc(tnode->tok) == OP_ASSOC_LEFT && get_operator_prec(tnode->tok) <= get_operator_prec(_peek->tok))
-					|| (get_operator_assoc(tnode->tok) == OP_ASSOC_RIGHT && get_operator_prec(tnode->tok) < get_operator_prec(_peek->tok)))) {
+        else if (curr_node->ttype == TT_LITERAL || curr_node->ttype == TT_VARIABLE || curr_node->ttype == TT_FUNCTION_NOARG)
+            push_ast_stack(outStack, create_ast_node(curr_node->tok, curr_node->value));
+        else if (curr_node->ttype == TT_OPERATOR) {
+            while ((_peek = peek_ast_stack(opStack)) != NULL && (_peek->ttype == TT_OPERATOR) 
+				&& ((get_operator_assoc(curr_node->tok) == OP_ASSOC_LEFT && get_operator_prec(curr_node->tok) <= get_operator_prec(_peek->tok))
+					|| (get_operator_assoc(curr_node->tok) == OP_ASSOC_RIGHT && get_operator_prec(curr_node->tok) < get_operator_prec(_peek->tok))))
                         add_stack_node(outStack, pop_ast_stack(opStack));
-                        _peek = peek_ast_stack(opStack);
-                    }
 
-            push_ast_stack(opStack, create_ast_node(tnode->tok, tnode->value));
+            push_ast_stack(opStack, create_ast_node(curr_node->tok, curr_node->value));
 
-        } else if (tnode->ttype == TT_PAREN) {
-            if (tnode->tok == LPAREN) {
-                push_ast_stack(opStack, create_ast_node(tnode->tok, tnode->value));
-            } else if (tnode->tok == RPAREN) {
-                _peek = peek_ast_stack(opStack);
-
-                while (_peek && _peek->tok != LPAREN) {
+        } else if (curr_node->ttype == TT_PAREN) {
+            if (curr_node->tok == LPAREN) {
+                push_ast_stack(opStack, create_ast_node(curr_node->tok, curr_node->value));
+            } else if (curr_node->tok == RPAREN) {
+                while ((_peek = peek_ast_stack(opStack)) != NULL && _peek->tok != LPAREN)
                     add_stack_node(outStack, pop_ast_stack(opStack));
-                    _peek = peek_ast_stack(opStack);
-                }
 
                 pop_ast_stack(opStack);
             }
         }
     }
 
-    _peek = peek_ast_stack(opStack);
-
-    while (_peek) {
+    while ((_peek = peek_ast_stack(opStack)) != NULL)
         add_stack_node(outStack, pop_ast_stack(opStack));
-        _peek = peek_ast_stack(opStack);
-    }
-    
+
     return pop_ast_stack(outStack);
 }
 
