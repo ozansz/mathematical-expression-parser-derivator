@@ -1,8 +1,10 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <math.h>
 
 #include "lexer.h"
+#include "strbuf.h"
 
 int is_number(char ch) {
     if ('0' <= ch && ch <= '9')
@@ -20,6 +22,10 @@ int is_space(char ch) {
 
 int _ch_to_int(char ch) {
     return ch - '0';
+}
+
+char _int_to_ch(int i) {
+    return i + '0';
 }
 
 TOKEN_TYPE get_token_type(TOKEN tok) {
@@ -207,73 +213,69 @@ Lex *tokenize(char *str, tnodesize len, int *errn) {
     return _lex;
 }
 
-char *detokenize(Lex *lex) {
-    int ctr;
-    char *detok = (char *) malloc(lex->lex_size * sizeof(char) * 3);
-    
+StringBuffer *detokenize(Lex *lex) {
+    tnodevalue tmp_num, base, sc;
+
+    StringBuffer *detok = create_str_buffer();    
     TokenNode *curr_token;
 
-    for (ctr = 0; (curr_token = lex_iternode(lex)) != NULL; ctr++) {
+    while ((curr_token = lex_iternode(lex)) != NULL) {
         switch (curr_token->tok) {
             case NUM:
+                tmp_num = curr_token->value;
 
+                for (sc = 0; tmp_num > 0; sc++)
+                    tmp_num /= 10;
+
+                tmp_num = curr_token->value;
+
+                while (sc--) {
+                    base = tmp_num / pow(10, sc);
+                    tmp_num -= base * pow(10, sc);
+                    push_char_to_buffer(detok, _int_to_ch(base));
+                }
                 break;
             case OP_ADD:
-                *(detok + ctr) = '+';
+                push_char_to_buffer(detok, '+');
                 break;
             case OP_SUB:
-                *(detok + ctr) = '-';
+                push_char_to_buffer(detok, '-');
                 break;
             case OP_MUL:
-                *(detok + ctr) = '*';
+                push_char_to_buffer(detok, '*');
                 break;
             case OP_DIV:
-                *(detok + ctr) = '/';
+                push_char_to_buffer(detok, '/');
                 break;
             case OP_POW:
-                *(detok + ctr) = '^';
+                push_char_to_buffer(detok, '^');
                 break;
             case VAR_X:
-                *(detok + ctr) = 'X';
+                push_char_to_buffer(detok, 'X');
                 break;
             case F_SIN:
-                *(detok + ctr) = 's';
-                *(detok + ctr + 1) = 'i';
-                *(detok + ctr + 2) = 'n';
-                ctr += 2;
+                push_str_to_buffer(detok, "sin", 3);
                 break;
             case F_COS:
-                *(detok + ctr) = 'c';
-                *(detok + ctr + 1) = 'o';
-                *(detok + ctr + 2) = 's';
-                ctr += 2;
+                push_str_to_buffer(detok, "cos", 3);
                 break;
             case F_TAN:
-                *(detok + ctr) = 't';
-                *(detok + ctr + 1) = 'a';
-                *(detok + ctr + 2) = 'n';
-                ctr += 2;
+                push_str_to_buffer(detok, "tan", 3);
                 break;
             case F_SH:
-                *(detok + ctr) = 's';
-                *(detok + ctr + 1) = 'h';
-                ++ctr;
+                push_str_to_buffer(detok, "sh", 2);
                 break;
             case F_CH:
-                *(detok + ctr) = 'c';
-                *(detok + ctr + 1) = 'h';
-                ++ctr;
+                push_str_to_buffer(detok, "ch", 2);
                 break;
             case F_LN:
-                *(detok + ctr) = 'l';
-                *(detok + ctr + 1) = 'n';
-                ++ctr;
+                push_str_to_buffer(detok, "ln", 2);
                 break;
             case LPAREN:
-                *(detok + ctr) = '(';
+                push_char_to_buffer(detok, '(');
                 break;
             case RPAREN:
-                *(detok + ctr) = ')';
+                push_char_to_buffer(detok, ')');
                 break;
             default:
                 break;

@@ -1,6 +1,8 @@
 #if !defined(LEXER_H)
 #define LEXER_H
 
+#include "strbuf.h"
+
 #define OP_ASSOC_LEFT   1
 #define OP_ASSOC_RIGHT  2
 
@@ -60,6 +62,7 @@ typedef struct _Lex {
 int is_number(char ch);
 int is_space(char ch);
 int _ch_to_int(char ch);
+char _int_to_ch(int i);
 
 TOKEN_TYPE get_token_type(TOKEN tok);
 operatorprec get_operator_prec(TOKEN tok);
@@ -67,7 +70,7 @@ operatorassoc get_operator_assoc(TOKEN tok);
 Lex *initiate_token_list(TOKEN tok);
 tnodesize add_token_node(Lex *lex, TOKEN new_tok, int value);
 Lex *tokenize(char *str, tnodesize len, int *errn);
-char *detokenize(Lex *lex);
+StringBuffer *detokenize(Lex *lex);
 TokenNode *lex_iternode(Lex *lex);
 char *get_token_repr(TokenNode *node);
 void dump_lex(Lex *lex);

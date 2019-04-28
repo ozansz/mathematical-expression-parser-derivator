@@ -61,5 +61,7 @@ int main(int argc, char **argv, char **envp) {
 
     dump_lex(der_lex);
 
+    printf("\nDetokenized expression: %s\n", detokenize(der_lex)->str);
+
     return 0;
 }
