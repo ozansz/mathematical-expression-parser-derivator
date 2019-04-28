@@ -1,8 +1,164 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <math.h>
 
 #include "ast.h"
 #include "lexer.h"
+
+void __ddebug(char *str, int depth) {
+    printf("\n");
+
+    while (depth--)
+        printf("    ");
+    
+    printf(str);
+}
+
+int is_zero_node(ASTNode *node) {
+    if (node == NULL)
+        return -1;
+    else if (node->tok == NUM && node->value == 0)
+        return 1;
+    else
+        return 0;
+}
+
+int is_one_node(ASTNode *node) {
+    if (node == NULL)
+        return -1;
+    else if (node->tok == NUM && node->value == 1)
+        return 1;
+    else
+        return 0;
+}
+
+void eval_node_numeric(ASTNode *node) {
+    int zero_left, zero_right, one_left, one_right;
+
+    if (node == NULL || node->ttype != TT_OPERATOR)
+        return;
+
+    if (node->left->tok != NUM || node->right->tok != NUM)
+        return;
+
+    switch (node->tok) {
+        case OP_ADD:
+            convert_ast_node(node, NUM, node->left->value + node->right->value, NULL, NULL);
+            break;
+        case OP_SUB:
+            if (node->left->value >= node->right->value)
+                convert_ast_node(node, NUM, node->left->value - node->right->value, NULL, NULL);
+            break;
+        case OP_MUL:
+            convert_ast_node(node, NUM, node->left->value * node->right->value, NULL, NULL);
+            break;
+        case OP_DIV:
+            if (node->left->value % node->right->value == 0)
+                convert_ast_node(node, NUM, node->left->value / node->right->value, NULL, NULL);
+            break;
+        case OP_POW:
+            zero_left = is_zero_node(node->left);
+            zero_right = is_zero_node(node->right);
+            one_left = is_one_node(node->left);
+            one_right = is_one_node(node->right);
+
+            if (zero_left && !zero_right)
+                convert_ast_node(node, NUM, 0, NULL, NULL);
+            else if ((!zero_left && zero_right) || one_left)
+                convert_ast_node(node, NUM, 1, NULL, NULL);
+            else if (one_right)
+                convert_ast_node_from_node(node, node->left);
+            else
+                convert_ast_node(node, NUM, pow(node->left->value, node->right->value), NULL, NULL);
+            break;
+        default:
+            break;
+    }
+}
+
+void simplify_node(ASTNode *node, int depth) {
+    char buf[80];
+    int zero_left, zero_right, one_left, one_right;
+
+    snprintf(buf, 80, "CALL simplify_node at %p <TOKEN: %d, VALUE: %d>", (void *)node, node->tok, node->value);
+    __ddebug(buf, depth);
+
+    if (node == NULL) {
+        __ddebug("node is NULL\n", depth);
+        return;
+    }
+
+    if (node->ttype != TT_OPERATOR) {
+        __ddebug("node is not type of TT_OPERATOR\n", depth);
+        return;
+    }
+
+    __ddebug("making recursive calls\n", depth);
+    simplify_node(node->left, depth+1);
+    simplify_node(node->right, depth+1);
+
+    zero_left = is_zero_node(node->left);
+    zero_right = is_zero_node(node->right);
+    one_left = is_one_node(node->left);
+    one_right = is_one_node(node->right);
+
+    snprintf(buf, 80, "zl: %d, zr: %d, ol: %d, or: %d", zero_left, zero_right, one_left, one_right);
+    __ddebug(buf, depth);
+
+    if (node->left->tok == NUM && node->right->tok == NUM) {
+        __ddebug("eval node numeric is calling", depth);
+        eval_node_numeric(node);
+        return;
+    }
+
+    switch (node->tok) {
+        case OP_ADD:
+            __ddebug("op type <+>", depth);
+            if (zero_left)
+                convert_ast_node_from_node(node, node->right);
+            else if (zero_right)
+                convert_ast_node_from_node(node, node->left);
+            break;
+        case OP_SUB:
+            __ddebug("op type <->", depth); 
+            if (zero_right)
+                convert_ast_node_from_node(node, node->left);
+            break;
+        case OP_MUL:
+            __ddebug("op type <*>", depth);
+            if (zero_left || zero_right)
+                convert_ast_node(node, NUM, 0, NULL, NULL);
+            else if (one_left)
+                convert_ast_node_from_node(node, node->right);
+            else if (one_right)
+                convert_ast_node_from_node(node, node->left);
+            break;
+        case OP_DIV:
+            __ddebug("op type </>", depth);
+            if (one_right)
+                convert_ast_node_from_node(node, node->left);
+            else if (zero_left)
+                convert_ast_node(node, NUM, 0, NULL, NULL);
+            break;
+        case OP_POW:
+            __ddebug("op type <^>", depth);
+            if (zero_left && !zero_right)
+                convert_ast_node(node, NUM, 0, NULL, NULL);
+            else if ((!zero_left && zero_right) || one_left)
+                convert_ast_node(node, NUM, 1, NULL, NULL);
+            else if (one_right)
+                convert_ast_node_from_node(node, node->left);
+            break;
+        default:
+            __ddebug("[ERROR] Invalid op type catched!", depth);
+            snprintf(buf, 80, "[ERROR] node->tok = %d", node->tok);
+            __ddebug(buf, depth);
+            break;
+    }
+
+    snprintf(buf, 80, "RET simplify_node at %p <TOKEN: %d, VALUE: %d>\n", (void *)node, node->tok, node->value);
+    __ddebug(buf, depth);
+}
 
 ASTNode *create_ast_node(TOKEN tok, tnodevalue val) {
     ASTNode *node = (ASTNode *) malloc(sizeof(ASTNode));
@@ -27,6 +183,18 @@ ASTNode *duplicate_ast_node(ASTNode *node) {
     dup->left = node->left;
     
     return dup;
+}
+
+void convert_ast_node(ASTNode *node, TOKEN new_tok, tnodevalue value, ASTNode *left, ASTNode *right) {
+    node->tok = new_tok;
+    node->value = value;
+    node->ttype = get_token_type(node->tok);
+    node->left = left;
+    node->right = right;
+}
+
+void convert_ast_node_from_node(ASTNode *to, ASTNode *from) {
+    convert_ast_node(to, from->tok, from->value, from->left, from->right);
 }
 
 ASTStack *create_ast_stack(void) {
@@ -175,9 +343,9 @@ void _dump_ast_node(ASTNode *node, tnodesize depth) {
     int i;
 
     for (i = 0; i < depth; i++)
-        printf("    ");
-
-    printf("%s\n", get_token_repr((TokenNode *)node));
+        printf("      ");
+    
+    printf("%s<%d> %p\n", get_token_repr((TokenNode *)node), node->tok, (void *)node);
 
     if (node->left != NULL)
         _dump_ast_node(node->left, depth+1);
@@ -188,4 +356,8 @@ void _dump_ast_node(ASTNode *node, tnodesize depth) {
 void dump_ast(AST *ast) {
     printf("\n");
     _dump_ast_node(ast->root, 0);
+}
+
+void free_ast_node(ASTNode *node) {
+    free(node);
 }

@@ -1,6 +1,7 @@
 #if !defined(EVALUATOR_H)
 #define EVALUATOR_H
 
+#include "lexer.h"
 #include "ast.h"
 
 AST *derive_ast(AST *ast);

@@ -32,6 +32,7 @@ int main(int argc, char **argv, char **envp) {
     printf("\n[+] Building AST... ");
 
     ast = build_ast(lex);
+    simplify_node(ast->root, 0);
 
     printf("DONE.\n");
 
@@ -45,6 +46,12 @@ int main(int argc, char **argv, char **envp) {
 
     printf("DONE.\n");
     printf("\n[i] Derived AST:\n");
+
+    dump_ast(ast);
+
+    simplify_node(ast->root, 0);
+
+    printf("\nAfter evaluation:\n");
 
     dump_ast(ast);
 

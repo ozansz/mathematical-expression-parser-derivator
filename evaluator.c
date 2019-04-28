@@ -9,7 +9,7 @@ AST *derive_ast(AST *ast) {
     AST *ret = initiate_ast_tree();
 
     if (ret == NULL)
-        return NULL;
+        return NULL; 
 
     ret->node_count = -1;
     ret->tree_depth = -1;
