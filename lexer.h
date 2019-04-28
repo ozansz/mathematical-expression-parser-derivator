@@ -67,6 +67,7 @@ operatorassoc get_operator_assoc(TOKEN tok);
 Lex *initiate_token_list(TOKEN tok);
 tnodesize add_token_node(Lex *lex, TOKEN new_tok, int value);
 Lex *tokenize(char *str, tnodesize len, int *errn);
+char *detokenize(Lex *lex);
 TokenNode *lex_iternode(Lex *lex);
 char *get_token_repr(TokenNode *node);
 void dump_lex(Lex *lex);

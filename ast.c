@@ -107,6 +107,8 @@ void simplify_node(ASTNode *node, int depth) {
 
     if (node->left->tok == NUM && node->right->tok == NUM) {
         __ddebug("eval node numeric is calling", depth);
+        snprintf(buf, 80, "RET simplify_node at %p <TOKEN: %d, VALUE: %d>\n", (void *)node, node->tok, node->value);
+        __ddebug(buf, depth);
         eval_node_numeric(node);
         return;
     }
@@ -179,8 +181,12 @@ ASTNode *duplicate_ast_node(ASTNode *node) {
     ASTNode *dup = create_ast_node(node->tok, node->value);
 
     dup->ttype = node->ttype;
-    dup->right = node->right;
-    dup->left = node->left;
+
+    if (node->left != NULL)
+        dup->right = duplicate_ast_node(node->right);
+    
+    if (node->right != NULL)
+        dup->left = duplicate_ast_node(node->left);
     
     return dup;
 }
@@ -337,6 +343,54 @@ AST *build_ast(Lex *lex) {
     ast->tree_depth = -1;
 
     return ast;
+}
+
+void decompose_ast_node(ASTNode *node, Lex *lex) {
+    if (node == NULL)
+        return;
+
+    if (node->left == NULL || node->right == NULL) {
+        add_token_node(lex, node->tok, node->value);
+        return;
+    }
+        
+    if (node->left->ttype != TT_OPERATOR && node->right->ttype != TT_OPERATOR) {
+        add_token_node(lex, node->left->tok, node->left->value);
+        add_token_node(lex, node->tok, node->value);
+        add_token_node(lex, node->right->tok, node->right->value);
+    } else {
+        if (node->left->ttype == TT_OPERATOR) {
+            if (get_operator_prec(node->tok) > get_operator_prec(node->left->tok)) {
+                add_token_node(lex, LPAREN, 0);
+                decompose_ast_node(node->left, lex);
+                add_token_node(lex, RPAREN, 0);
+            } else
+                decompose_ast_node(node->left, lex);
+            
+        } else
+            add_token_node(lex, node->left->tok, node->left->value);
+
+        add_token_node(lex, node->tok, node->value);
+
+        if (node->right->ttype == TT_OPERATOR) {
+            if (get_operator_prec(node->tok) > get_operator_prec(node->right->tok)) {
+                add_token_node(lex, LPAREN, 0);
+                decompose_ast_node(node->right, lex);
+                add_token_node(lex, RPAREN, 0);
+            } else
+                decompose_ast_node(node->right, lex);
+            
+        } else
+            add_token_node(lex, node->right->tok, node->right->value);
+    }
+}
+
+Lex *decompose_ast(AST *ast) {
+    Lex *lex = initiate_token_list(__INIT);
+
+    decompose_ast_node(ast->root, lex);
+
+    return lex;
 }
 
 void _dump_ast_node(ASTNode *node, tnodesize depth) {

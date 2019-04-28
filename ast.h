@@ -49,6 +49,9 @@ AST *initiate_ast_tree(void);
 ASTNode *parse_lex(Lex *lex);
 AST *build_ast(Lex *lex);
 
+void decompose_ast_node(ASTNode *node, Lex *lex);
+Lex *decompose_ast(AST *ast);
+
 void _dump_ast_node(ASTNode *node, tnodesize depth);
 void dump_ast(AST *ast);
 

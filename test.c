@@ -10,7 +10,7 @@ int main(int argc, char **argv, char **envp) {
     char expr[100];
     int err = 0;
 
-    Lex *lex;
+    Lex *lex, *der_lex;
     AST *ast;
 
     fgets(expr, 100, stdin);
@@ -54,6 +54,12 @@ int main(int argc, char **argv, char **envp) {
     printf("\nAfter evaluation:\n");
 
     dump_ast(ast);
+
+    der_lex = decompose_ast(ast);
+
+    printf("\nDecomposed AST:\n\n");
+
+    dump_lex(der_lex);
 
     return 0;
 }

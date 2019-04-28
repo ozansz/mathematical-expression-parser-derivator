@@ -207,6 +207,82 @@ Lex *tokenize(char *str, tnodesize len, int *errn) {
     return _lex;
 }
 
+char *detokenize(Lex *lex) {
+    int ctr;
+    char *detok = (char *) malloc(lex->lex_size * sizeof(char) * 3);
+    
+    TokenNode *curr_token;
+
+    for (ctr = 0; (curr_token = lex_iternode(lex)) != NULL; ctr++) {
+        switch (curr_token->tok) {
+            case NUM:
+
+                break;
+            case OP_ADD:
+                *(detok + ctr) = '+';
+                break;
+            case OP_SUB:
+                *(detok + ctr) = '-';
+                break;
+            case OP_MUL:
+                *(detok + ctr) = '*';
+                break;
+            case OP_DIV:
+                *(detok + ctr) = '/';
+                break;
+            case OP_POW:
+                *(detok + ctr) = '^';
+                break;
+            case VAR_X:
+                *(detok + ctr) = 'X';
+                break;
+            case F_SIN:
+                *(detok + ctr) = 's';
+                *(detok + ctr + 1) = 'i';
+                *(detok + ctr + 2) = 'n';
+                ctr += 2;
+                break;
+            case F_COS:
+                *(detok + ctr) = 'c';
+                *(detok + ctr + 1) = 'o';
+                *(detok + ctr + 2) = 's';
+                ctr += 2;
+                break;
+            case F_TAN:
+                *(detok + ctr) = 't';
+                *(detok + ctr + 1) = 'a';
+                *(detok + ctr + 2) = 'n';
+                ctr += 2;
+                break;
+            case F_SH:
+                *(detok + ctr) = 's';
+                *(detok + ctr + 1) = 'h';
+                ++ctr;
+                break;
+            case F_CH:
+                *(detok + ctr) = 'c';
+                *(detok + ctr + 1) = 'h';
+                ++ctr;
+                break;
+            case F_LN:
+                *(detok + ctr) = 'l';
+                *(detok + ctr + 1) = 'n';
+                ++ctr;
+                break;
+            case LPAREN:
+                *(detok + ctr) = '(';
+                break;
+            case RPAREN:
+                *(detok + ctr) = ')';
+                break;
+            default:
+                break;
+        }
+    }
+
+    return detok;
+}
+
 TokenNode *lex_iternode(Lex *lex) {
     TokenNode *tnode = lex->token_list;
 
@@ -310,17 +386,3 @@ void free_lex(Lex *lex) {
     free(lex);
 }
 
-/*int main(int argc, char **argv, char **envp) {
-    Lex *lex;
-    char buf[100] = {0};
-    int err = 0;
-
-    fgets(buf, 100, stdin);
-    printf("Len: %ld\n\n", (long int)strlen(buf));
-
-    lex = tokenize(buf, strlen(buf), &err);
-
-    dump_lex(lex);
-
-    return 0;
-}*/
