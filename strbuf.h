@@ -16,4 +16,6 @@ int push_char_to_buffer(StringBuffer *buf, char c);
 int push_str_to_buffer(StringBuffer *buf, char *str, int ssize);
 int extend_str_buffer(StringBuffer *buf);
 
+int get_string_input(StringBuffer *buf);
+
 #endif

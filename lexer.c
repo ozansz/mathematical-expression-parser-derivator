@@ -222,6 +222,11 @@ StringBuffer *detokenize(Lex *lex) {
     while ((curr_token = lex_iternode(lex)) != NULL) {
         switch (curr_token->tok) {
             case NUM:
+                if (curr_token->value == 0) {
+                    push_char_to_buffer(detok, '0');
+                    break;
+                }
+
                 tmp_num = curr_token->value;
 
                 for (sc = 0; tmp_num > 0; sc++)

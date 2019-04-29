@@ -5,19 +5,24 @@
 #include "lexer.h"
 #include "ast.h"
 #include "evaluator.h"
+#include "strbuf.h"
 
 int main(int argc, char **argv, char **envp) {
-    char expr[100];
+    /*char expr[100];*/
     int err = 0;
 
     Lex *lex, *der_lex;
     AST *ast;
 
-    fgets(expr, 100, stdin);
+    StringBuffer *input_buffer = create_str_buffer();
+
+    /*fgets(expr, 100, stdin);*/
+    get_string_input(input_buffer);
 
     printf("\n[+] Tokenizing expression... ");
 
-    lex = tokenize(expr, strlen(expr), &err);
+    /*lex = tokenize(expr, strlen(expr), &err);*/
+    lex = tokenize(input_buffer->str, input_buffer->last_char_indx, &err);
 
     if (err < 0) {
         printf("\n[!] Error: %d\n", err);

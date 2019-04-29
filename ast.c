@@ -6,12 +6,16 @@
 #include "lexer.h"
 
 void __ddebug(char *str, int depth) {
+#ifdef  USE_DDEBUG
     printf("\n");
 
     while (depth--)
         printf("    ");
     
     printf(str);
+#else
+    return;
+#endif
 }
 
 int is_zero_node(ASTNode *node) {
@@ -373,7 +377,7 @@ void decompose_ast_node(ASTNode *node, Lex *lex) {
         add_token_node(lex, node->tok, node->value);
 
         if (node->right->ttype == TT_OPERATOR) {
-            if (get_operator_prec(node->tok) > get_operator_prec(node->right->tok)) {
+            if ((get_operator_prec(node->tok) > get_operator_prec(node->right->tok)) || (node->tok == OP_SUB && (node->right->tok == OP_ADD || node->right->tok == OP_SUB))) {
                 add_token_node(lex, LPAREN, 0);
                 decompose_ast_node(node->right, lex);
                 add_token_node(lex, RPAREN, 0);

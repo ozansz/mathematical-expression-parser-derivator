@@ -46,3 +46,12 @@ int extend_str_buffer(StringBuffer *buf) {
 
     return buf->size;
 }
+
+int get_string_input(StringBuffer *buf) {
+    char ch;
+
+    while ((ch = getchar()) != EOF)
+        push_char_to_buffer(buf, ch);
+
+    return buf->last_char_indx;
+}
