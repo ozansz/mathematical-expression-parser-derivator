@@ -25,14 +25,10 @@ int derive_node(ASTNode *node) {
 
     switch (node->ttype) {
         case TT_LITERAL:
-            node->value = 0;
+            convert_ast_node(node, NUM, 0, NULL, NULL);
             break;
         case TT_VARIABLE:
-            node->tok = NUM;
-            node->ttype = TT_LITERAL;
-            node->value = 1;
-            node->right = NULL;
-            node->left = NULL;
+            convert_ast_node(node, NUM, 1, NULL, NULL);
             break;
         case TT_FUNCTION_NOARG:
             err_ret = derive_func(node);
@@ -87,10 +83,8 @@ int _derive_tangent(ASTNode *node) {
 
     pownode->right = twonode;
     pownode->left = tannode;
-    node->right = onenode;
-    node->left = pownode;
-    node->tok = OP_ADD;
-    node->ttype = get_token_type(node->tok);
+
+    convert_ast_node(node, OP_ADD, 0, pownode, onenode);
 
     return err_ret;
 }
@@ -106,10 +100,7 @@ int _derive_log(ASTNode *node) {
     onenode = create_ast_node(NUM, 1);
     varnode = create_ast_node(VAR_X, 0);
 
-    node->left = onenode;
-    node->right = varnode;
-    node->tok = OP_DIV;
-    node->ttype = get_token_type(node->tok);
+    convert_ast_node(node, OP_DIV, 0, onenode, varnode);
 
     return err_ret;
 }
@@ -159,10 +150,7 @@ int _derive_op_mul(ASTNode *node) {
     mulnode_right->left = ldup;
     mulnode_right->right = rder;
 
-    node->tok = OP_ADD;
-    node->ttype = get_token_type(node->tok);
-    node->left = mulnode_left;
-    node->right = mulnode_right;
+    convert_ast_node(node, OP_ADD, 0, mulnode_left, mulnode_right);
 
     return err_ret;
 }
@@ -197,10 +185,7 @@ int _derive_op_div(ASTNode *node) {
     pownode->left = rdup2;
     pownode->right = twonode;
 
-    node->tok = OP_DIV;
-    node->ttype = get_token_type(node->tok);
-    node->left = subnode;
-    node->right = pownode;
+    convert_ast_node(node, OP_DIV, 0, subnode, pownode);
 
     return err_ret;
 }
@@ -224,10 +209,7 @@ int _derive_op_pow(ASTNode *node) {
     mulnode->left = create_ast_node(NUM, node->right->value);
     mulnode->right = pownode;
     
-    node->tok = OP_MUL;
-    node->ttype = get_token_type(node->tok);
-    node->left = mulnode;
-    node->right = fder;
+    convert_ast_node(node, OP_MUL, 0, mulnode, fder);
 
     return err_ret;
 }
